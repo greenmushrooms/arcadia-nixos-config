@@ -177,6 +177,7 @@ in
     user = "arcadia";
     serviceOverrides = {
       ReadWritePaths = [ "/home/arcadia/projects/arcadia-nixos-config" ];
+      ProtectHome = false;
     };
   };
 
