@@ -54,9 +54,6 @@ in
   };
 
   services.desktopManager.plasma6.enable = true;
-  programs.hyprland = { enable = true; withUWSM = true; };
-  programs.niri.enable = true;
-
   services.displayManager.sddm = {
     enable = true;
     wayland.enable = true;
@@ -67,12 +64,6 @@ in
   };
   services.displayManager.defaultSession = "plasma";
 
-  # Input
-  services.libinput = {
-    enable = true;
-    mouse.naturalScrolling = true;
-  };
-
   # Audio (PipeWire)
   services.pulseaudio.enable = false;
   security.rtkit.enable = true;
@@ -81,7 +72,6 @@ in
     alsa.enable = true;
     alsa.support32Bit = true;
     pulse.enable = true;
-    jack.enable = true;
   };
 
   # Power - keep CPU efficient but NEVER sleep
@@ -89,26 +79,15 @@ in
   powerManagement.enable = true;
   powerManagement.cpuFreqGovernor = "powersave";
 
-  # Disable ALL sleep/suspend (the nuclear option)
+  # Disable all sleep/suspend
   systemd.targets.sleep.enable = false;
   systemd.targets.suspend.enable = false;
   systemd.targets.hibernate.enable = false;
   systemd.targets.hybrid-sleep.enable = false;
-  systemd.services."systemd-suspend".enable = false;
-  systemd.services."systemd-hibernate".enable = false;
-  systemd.services."systemd-hybrid-sleep".enable = false;
-  systemd.services."systemd-suspend-then-hibernate".enable = false;
 
-  services.logind = {
-    lidSwitch = "ignore";
-    settings.Login = {
-      HandleSuspendKey = "ignore";
-      HandleHibernateKey = "ignore";
-      HandleLidSwitch = "ignore";
-      HandleLidSwitchExternalPower = "ignore";
-      IdleAction = "ignore";
-      IdleActionSec = 0;
-    };
+  services.logind.settings.Login = {
+    IdleAction = "ignore";
+    IdleActionSec = 0;
   };
 
   # Disable screen blanking/locking
@@ -152,15 +131,12 @@ in
 
   # Packages
   environment.systemPackages = with pkgs; [
-    vim
     wget
     git
     htop
     libva-utils
     intel-gpu-tools
     alacritty
-    fuzzel
-    waybar
     firefox
     brave
     libcec
@@ -186,8 +162,7 @@ in
     description = "NixOS Rebuild Switch";
     serviceConfig = {
       Type = "oneshot";
-      Environment = "NIX_PATH=/nix/var/nix/profiles/per-user/root/channels/nixos:nixos-config=/etc/nixos/configuration.nix";
-      ExecStart = "/run/current-system/sw/bin/nixos-rebuild switch";
+      ExecStart = "/run/current-system/sw/bin/nixos-rebuild switch --flake /home/arcadia/projects/arcadia-nixos-config#arcadia";
     };
   };
 
