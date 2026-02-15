@@ -1,0 +1,15 @@
+name: Deploy NixOS Config
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: [self-hosted, nixos]
+    steps:
+      - name: Pull latest config
+        run: cd ~/projects/arcadia-nixos-config && git pull
+
+      - name: Rebuild NixOS
+        run: sudo nixos-rebuild switch

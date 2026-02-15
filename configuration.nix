@@ -168,6 +168,16 @@ in
     heroic
   ];
 
+  # GitHub Actions Runner
+  services.github-runners.arcadia = {
+    enable = true;
+    url = "https://github.com/greenmushrooms/arcadia-nixos-config";
+    tokenFile = "/home/arcadia/.github-runner-token";
+    extraLabels = [ "nixos" ];
+    user = "arcadia";
+
+  };
+
   # Services
   services.openssh.enable = true;
 
