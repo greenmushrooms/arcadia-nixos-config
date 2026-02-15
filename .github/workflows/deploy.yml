@@ -8,13 +8,5 @@ jobs:
   deploy:
     runs-on: [self-hosted, nixos]
     steps:
-      - uses: actions/checkout@v4
-
-      - name: Update flake inputs
-        run: nix flake update --flake .
-
-      - name: Sync config
-        run: rsync -a --delete --exclude='.git' ./ /home/arcadia/projects/arcadia-nixos-config/
-
       - name: Trigger rebuild
         run: systemctl start nixos-rebuild-switch
