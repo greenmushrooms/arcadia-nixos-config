@@ -12,9 +12,9 @@ jobs:
 
       - name: Sync config
         run: |
-          sudo cp configuration.nix /home/arcadia/projects/arcadia-nixos-config/
-          sudo cp hardware-configuration.nix /home/arcadia/projects/arcadia-nixos-config/
-          sudo cp -r .github /home/arcadia/projects/arcadia-nixos-config/
+          cp configuration.nix /home/arcadia/projects/arcadia-nixos-config/
+          cp hardware-configuration.nix /home/arcadia/projects/arcadia-nixos-config/
+          cp -r .github /home/arcadia/projects/arcadia-nixos-config/
 
-      - name: Rebuild NixOS
-        run: sudo nixos-rebuild switch
+      - name: Trigger rebuild
+        run: systemctl start nixos-rebuild-switch

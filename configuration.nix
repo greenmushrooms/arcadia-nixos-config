@@ -175,8 +175,30 @@ in
     tokenFile = "/home/arcadia/.github-runner-token";
     extraLabels = [ "nixos" ];
     user = "arcadia";
-
+    serviceOverrides = {
+      ReadWritePaths = [ "/home/arcadia/projects/arcadia-nixos-config" ];
+    };
   };
+
+  # Dedicated rebuild service
+  systemd.services.nixos-rebuild-switch = {
+    description = "NixOS Rebuild Switch";
+    serviceConfig = {
+      Type = "oneshot";
+      ExecStart = "/run/current-system/sw/bin/nixos-rebuild switch";
+    };
+  };
+
+  # Allow arcadia to trigger rebuild without password
+  security.polkit.extraConfig = ''
+    polkit.addRule(function(action, subject) {
+      if (action.id == "org.freedesktop.systemd1.manage-units" &&
+          action.lookup("unit") == "nixos-rebuild-switch.service" &&
+          subject.user == "arcadia") {
+        return polkit.Result.YES;
+      }
+    });
+  '';
 
   # Services
   services.openssh.enable = true;
