@@ -131,6 +131,7 @@ in
 
   # Packages
   environment.systemPackages = with pkgs; [
+    rsync
     wget
     git
     htop
@@ -162,7 +163,7 @@ in
     description = "NixOS Rebuild Switch";
     serviceConfig = {
       Type = "oneshot";
-      ExecStart = "/run/current-system/sw/bin/nixos-rebuild switch --flake /home/arcadia/projects/arcadia-nixos-config#arcadia";
+      ExecStart = "/run/current-system/sw/bin/nixos-rebuild switch --refresh --flake github:greenmushrooms/arcadia-nixos-config#arcadia";
     };
   };
 
