@@ -186,6 +186,7 @@ in
     description = "NixOS Rebuild Switch";
     serviceConfig = {
       Type = "oneshot";
+      Environment = "NIX_PATH=/nix/var/nix/profiles/per-user/root/channels/nixos:nixos-config=/etc/nixos/configuration.nix";
       ExecStart = "/run/current-system/sw/bin/nixos-rebuild switch";
     };
   };
