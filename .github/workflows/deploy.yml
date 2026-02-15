@@ -13,14 +13,6 @@ jobs:
       - name: Update flake inputs
         run: nix flake update --flake .
 
-      - name: Commit flake.lock
-        run: |
-          git add flake.lock
-          git diff --cached --quiet && exit 0
-          git -c user.name="github-actions" -c user.email="github-actions@github.com" \
-            commit -m "update flake.lock"
-          git push
-
       - name: Sync config
         run: rsync -a --delete --exclude='.git' ./ /home/arcadia/projects/arcadia-nixos-config/
 
