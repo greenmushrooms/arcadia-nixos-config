@@ -131,7 +131,6 @@ in
 
   # Packages
   environment.systemPackages = with pkgs; [
-    rsync
     wget
     git
     htop
@@ -141,6 +140,7 @@ in
     firefox
     brave
     libcec
+    antimicrox
     moonlight-qt
     heroic
   ];
