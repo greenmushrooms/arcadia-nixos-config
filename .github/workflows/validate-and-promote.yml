@@ -27,13 +27,18 @@ jobs:
       - name: Create or update PR to main
         env:
           GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
         run: |
           export PATH="/run/current-system/sw/bin:$PATH"
-          existing=$(gh pr list --head dev --base main --state open --json number -q '.[0].number')
-          if [ -n "$existing" ]; then
+          API="https://api.github.com/repos/$REPO"
+          AUTH="Authorization: Bearer $GH_TOKEN"
+
+          response=$(curl -sf -H "$AUTH" "$API/pulls?head=greenmushrooms:dev&base=main&state=open")
+          if [ "$response" != "[]" ]; then
             echo "PR #$existing already exists, build passed"
           else
-            gh pr create --base main --head dev \
-              --title "Promote dev to main" \
-              --body "Automated PR after successful nixos-rebuild build on dev."
+            curl -sf -X POST -H "$AUTH" -H "Content-Type: application/json" \
+              "$API/pulls" \
+              -d '{"title":"Promote dev to main","head":"dev","base":"main","body":"Automated PR after successful nixos-rebuild build on dev."}'
+            echo "PR created"
           fi
