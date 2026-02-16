@@ -1,0 +1,51 @@
+name: Validate and Promote to Main
+
+on:
+  push:
+    branches: [dev]
+
+jobs:
+  validate:
+    runs-on: [self-hosted, nixos]
+    steps:
+      - name: Full NixOS build validation
+        run: |
+          export PATH="/run/current-system/sw/bin:$PATH"
+          nixos-rebuild build --no-link --refresh \
+            --flake github:greenmushrooms/arcadia-nixos-config/dev#arcadia
+
+  promote:
+    needs: validate
+    runs-on: [self-hosted, nixos]
+    permissions:
+      pull-requests: write
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Create or update PR to main
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+        run: |
+          export PATH="/run/current-system/sw/bin:$PATH"
+          API="https://api.github.com/repos/$REPO"
+          AUTH="Authorization: Bearer $GH_TOKEN"
+
+          response=$(curl -sf -H "$AUTH" "$API/pulls?head=greenmushrooms:dev&base=main&state=open")
+          if echo "$response" | grep -q '"number"'; then
+            echo "Open PR already exists, build passed"
+          else
+            result=$(curl -s -w "\n%{http_code}" -X POST -H "$AUTH" -H "Content-Type: application/json" \
+              "$API/pulls" \
+              -d '{"title":"Promote dev to main","head":"dev","base":"main","body":"Automated PR after successful nixos-rebuild build on dev."}')
+            http_code=$(echo "$result" | tail -1)
+            body=$(echo "$result" | sed '$d')
+            echo "$body"
+            if [ "$http_code" -ge 400 ]; then
+              echo "PR creation failed with HTTP $http_code"
+              exit 1
+            fi
+            echo "PR created"
+          fi
