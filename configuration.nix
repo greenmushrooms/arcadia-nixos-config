@@ -54,8 +54,6 @@ in
   };
 
   services.desktopManager.plasma6.enable = true;
-  programs.hyprland = { enable = true; withUWSM = true; };
-  programs.niri.enable = true;
 
   services.displayManager.sddm = {
     enable = true;
@@ -152,20 +150,17 @@ in
 
   # Packages
   environment.systemPackages = with pkgs; [
-    vim
     wget
     git
     htop
     libva-utils
     intel-gpu-tools
-    alacritty
-    fuzzel
-    waybar
     firefox
     brave
     libcec
     moonlight-qt
     heroic
+    antimicrox
   ];
 
   # GitHub Actions Runner
