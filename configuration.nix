@@ -139,6 +139,11 @@ in
     X-KDE-autostart-phase=2
   '';
 
+  # Allow input group to write to /dev/uinput (needed by antimicrox)
+  services.udev.extraRules = ''
+    KERNEL=="uinput", MODE="0660", GROUP="input", OPTIONS+="static_node=uinput"
+  '';
+
   # Passwordless login
   security.pam.services.sddm.allowNullPassword = true;
 
