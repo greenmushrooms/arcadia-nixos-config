@@ -4,15 +4,13 @@ on:
   push:
     branches: [dev]
 
-env:
-  PATH: /run/current-system/sw/bin:/nix/var/nix/profiles/default/bin:${{ env.PATH }}
-
 jobs:
   validate:
     runs-on: [self-hosted, nixos]
     steps:
       - name: Full NixOS build validation
         run: |
+          export PATH="/run/current-system/sw/bin:$PATH"
           nixos-rebuild build --no-link --refresh \
             --flake github:greenmushrooms/arcadia-nixos-config/dev#arcadia
 
@@ -30,6 +28,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
+          export PATH="/run/current-system/sw/bin:$PATH"
           existing=$(gh pr list --head dev --base main --state open --json number -q '.[0].number')
           if [ -n "$existing" ]; then
             echo "PR #$existing already exists, build passed"
