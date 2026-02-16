@@ -1,0 +1,37 @@
+name: Validate and Promote to Main
+
+on:
+  push:
+    branches: [dev]
+
+jobs:
+  validate:
+    runs-on: [self-hosted, nixos]
+    steps:
+      - name: Full NixOS build validation
+        run: |
+          nixos-rebuild build --no-link --refresh \
+            --flake github:greenmushrooms/arcadia-nixos-config/dev#arcadia
+
+  promote:
+    needs: validate
+    runs-on: [self-hosted, nixos]
+    permissions:
+      pull-requests: write
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Create or update PR to main
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          existing=$(gh pr list --head dev --base main --state open --json number -q '.[0].number')
+          if [ -n "$existing" ]; then
+            echo "PR #$existing already exists, build passed"
+          else
+            gh pr create --base main --head dev \
+              --title "Promote dev to main" \
+              --body "Automated PR after successful nixos-rebuild build on dev."
+          fi
