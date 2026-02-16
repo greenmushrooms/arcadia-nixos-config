@@ -98,7 +98,6 @@ in
   systemd.services."systemd-suspend-then-hibernate".enable = false;
 
   services.logind = {
-    lidSwitch = "ignore";
     settings.Login = {
       HandleSuspendKey = "ignore";
       HandleHibernateKey = "ignore";
@@ -181,6 +180,7 @@ in
     description = "NixOS Rebuild Switch";
     serviceConfig = {
       Type = "oneshot";
+      ExecStartPre = "-/run/current-system/sw/bin/systemctl reset-failed nixos-rebuild-switch-to-configuration.service";
       ExecStart = "/run/current-system/sw/bin/nixos-rebuild switch --refresh --flake github:greenmushrooms/arcadia-nixos-config#arcadia";
     };
   };
