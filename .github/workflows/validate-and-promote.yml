@@ -37,8 +37,15 @@ jobs:
           if echo "$response" | grep -q '"number"'; then
             echo "Open PR already exists, build passed"
           else
-            curl -sf -X POST -H "$AUTH" -H "Content-Type: application/json" \
+            result=$(curl -s -w "\n%{http_code}" -X POST -H "$AUTH" -H "Content-Type: application/json" \
               "$API/pulls" \
-              -d '{"title":"Promote dev to main","head":"dev","base":"main","body":"Automated PR after successful nixos-rebuild build on dev."}'
+              -d '{"title":"Promote dev to main","head":"dev","base":"main","body":"Automated PR after successful nixos-rebuild build on dev."}')
+            http_code=$(echo "$result" | tail -1)
+            body=$(echo "$result" | sed '$d')
+            echo "$body"
+            if [ "$http_code" -ge 400 ]; then
+              echo "PR creation failed with HTTP $http_code"
+              exit 1
+            fi
             echo "PR created"
           fi
