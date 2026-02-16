@@ -169,6 +169,7 @@ in
     libcec
     moonlight-qt
     heroic
+    protonup-qt
     antimicrox
     nano
   ];
