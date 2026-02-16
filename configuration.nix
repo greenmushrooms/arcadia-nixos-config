@@ -160,6 +160,7 @@ in
     moonlight-qt
     heroic
     antimicrox
+    nano
   ];
 
   # GitHub Actions Runner
