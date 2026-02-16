@@ -4,13 +4,16 @@ on:
   push:
     branches: [dev]
 
+env:
+  PATH: /run/current-system/sw/bin:/nix/var/nix/profiles/default/bin:${{ env.PATH }}
+
 jobs:
   validate:
     runs-on: [self-hosted, nixos]
     steps:
       - name: Full NixOS build validation
         run: |
-          /run/current-system/sw/bin/nixos-rebuild build --no-link --refresh \
+          nixos-rebuild build --no-link --refresh \
             --flake github:greenmushrooms/arcadia-nixos-config/dev#arcadia
 
   promote:
