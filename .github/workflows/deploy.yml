@@ -9,4 +9,11 @@ jobs:
     runs-on: [self-hosted, nixos]
     steps:
       - name: Trigger rebuild
-        run: systemctl restart nixos-rebuild-switch --no-block
+        run: |
+          systemctl restart nixos-rebuild-switch --no-block
+      - name: Wait for rebuild
+        run: |
+          sleep 60
+          journalctl -u nixos-rebuild-switch -n 80 --no-pager || true
+          echo "---"
+          systemctl status nixos-rebuild-switch || true
