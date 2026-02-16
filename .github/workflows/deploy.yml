@@ -8,5 +8,13 @@ jobs:
   deploy:
     runs-on: [self-hosted, nixos]
     steps:
+      - name: Service status before
+        run: systemctl status nixos-rebuild-switch || true
       - name: Trigger rebuild
-        run: systemctl restart nixos-rebuild-switch --no-block
+        run: |
+          systemctl reset-failed nixos-rebuild-switch || true
+          systemctl restart nixos-rebuild-switch --no-block 2>&1 || true
+      - name: Wait and show logs
+        run: |
+          sleep 5
+          journalctl -u nixos-rebuild-switch -n 50 --no-pager || true
