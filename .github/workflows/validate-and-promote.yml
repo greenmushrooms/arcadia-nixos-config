@@ -34,8 +34,8 @@ jobs:
           AUTH="Authorization: Bearer $GH_TOKEN"
 
           response=$(curl -sf -H "$AUTH" "$API/pulls?head=greenmushrooms:dev&base=main&state=open")
-          if [ "$response" != "[]" ]; then
-            echo "PR #$existing already exists, build passed"
+          if echo "$response" | grep -q '"number"'; then
+            echo "Open PR already exists, build passed"
           else
             curl -sf -X POST -H "$AUTH" -H "Content-Type: application/json" \
               "$API/pulls" \
