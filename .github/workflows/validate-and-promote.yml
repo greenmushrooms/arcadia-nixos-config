@@ -10,7 +10,7 @@ jobs:
     steps:
       - name: Full NixOS build validation
         run: |
-          nixos-rebuild build --no-link --refresh \
+          /run/current-system/sw/bin/nixos-rebuild build --no-link --refresh \
             --flake github:greenmushrooms/arcadia-nixos-config/dev#arcadia
 
   promote:
