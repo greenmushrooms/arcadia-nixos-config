@@ -171,7 +171,6 @@ in
     heroic
     protonup-qt
     antimicrox
-    nano
   ];
 
   # GitHub Actions Runner
