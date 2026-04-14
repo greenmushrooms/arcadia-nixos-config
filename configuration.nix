@@ -179,6 +179,8 @@ in
     python3
   ];
 
+  programs.nix-ld.enable = true;
+
   # GitHub Actions Runner
   services.github-runners.arcadia = {
     enable = true;
