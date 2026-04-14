@@ -176,6 +176,7 @@ in
     protonup-qt
     antimicrox
     claude-code
+    python3
   ];
 
   # GitHub Actions Runner
