@@ -11,7 +11,7 @@ jobs:
       - name: Full NixOS build validation
         run: |
           export PATH="/run/current-system/sw/bin:$PATH"
-          nixos-rebuild build --no-link --refresh \
+          nixos-rebuild build --no-link --refresh --no-write-lock-file \
             --flake github:greenmushrooms/arcadia-nixos-config/dev#arcadia
 
   promote:
