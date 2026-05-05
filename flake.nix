@@ -3,6 +3,7 @@
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-25.11";
+    nixpkgs-unstable.url = "github:NixOS/nixpkgs/nixos-unstable";
 
     home-manager = {
       url = "github:nix-community/home-manager/release-25.11";
@@ -15,7 +16,7 @@
     };
   };
 
-  outputs = { nixpkgs, home-manager, nvim-config, ... }: {
+  outputs = { nixpkgs, nixpkgs-unstable, home-manager, nvim-config, ... }: {
     nixosConfigurations.arcadia = nixpkgs.lib.nixosSystem {
       system = "x86_64-linux";
       specialArgs = { inherit nvim-config; };
@@ -24,13 +25,7 @@
         {
           nixpkgs.overlays = [
             (final: prev: {
-              github-runner = prev.github-runner.overrideAttrs (old: rec {
-                version = "2.334.0";
-                src = prev.fetchurl {
-                  url = "https://github.com/actions/runner/releases/download/v${version}/actions-runner-linux-x64-${version}.tar.gz";
-                  hash = "sha256-BIAkzSyEjrbxTVZG1WwTpN7yrn7jrRISK+6WDFbz0nE=";
-                };
-              });
+              github-runner = nixpkgs-unstable.legacyPackages.${prev.system}.github-runner;
             })
           ];
         }
