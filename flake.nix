@@ -21,6 +21,19 @@
       specialArgs = { inherit nvim-config; };
       modules = [
         ./configuration.nix
+        {
+          nixpkgs.overlays = [
+            (final: prev: {
+              github-runner = prev.github-runner.overrideAttrs (old: rec {
+                version = "2.334.0";
+                src = prev.fetchurl {
+                  url = "https://github.com/actions/runner/releases/download/v${version}/actions-runner-linux-x64-${version}.tar.gz";
+                  hash = "sha256-BIAkzSyEjrbxTVZG1WwTpN7yrn7jrRISK+6WDFbz0nE=";
+                };
+              });
+            })
+          ];
+        }
         home-manager.nixosModules.home-manager
         {
           home-manager.useGlobalPkgs = true;
