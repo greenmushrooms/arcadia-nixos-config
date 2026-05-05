@@ -200,7 +200,7 @@ in
     serviceConfig = {
       Type = "oneshot";
       ExecStartPre = "-/run/current-system/sw/bin/systemctl reset-failed nixos-rebuild-switch-to-configuration.service";
-      ExecStart = "/run/current-system/sw/bin/nixos-rebuild switch --refresh --flake github:greenmushrooms/arcadia-nixos-config#arcadia";
+      ExecStart = "/run/current-system/sw/bin/nixos-rebuild switch --refresh --no-write-lock-file --flake github:greenmushrooms/arcadia-nixos-config#arcadia";
     };
   };
 
