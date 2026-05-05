@@ -94,7 +94,7 @@ in
   # Power - keep CPU efficient but NEVER sleep
   services.thermald.enable = true;
   powerManagement.enable = true;
-  powerManagement.cpuFreqGovernor = "powersave";
+  powerManagement.cpuFreqGovernor = "performance";
 
   # Disable ALL sleep/suspend (the nuclear option)
   systemd.targets.sleep.enable = false;
