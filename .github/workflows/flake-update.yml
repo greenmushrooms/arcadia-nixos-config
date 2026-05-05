@@ -1,0 +1,35 @@
+name: Flake Update
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 6 * * 1"
+
+jobs:
+  update:
+    runs-on: [self-hosted, nixos]
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: dev
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Update flake inputs
+        run: |
+          export PATH="/run/current-system/sw/bin:$PATH"
+          nix flake update
+
+      - name: Commit and push
+        run: |
+          export PATH="/run/current-system/sw/bin:$PATH"
+          if git diff --quiet flake.lock; then
+            echo "No flake.lock changes"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add flake.lock
+          git commit -m "flake update"
+          git push origin dev
