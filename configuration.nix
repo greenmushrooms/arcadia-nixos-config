@@ -28,6 +28,7 @@ in
     options = "--delete-older-than 30d";
   };
   nixpkgs.config.allowUnfree = true;
+  nixpkgs.config.permittedInsecurePackages = [ "nodejs-20.20.2" ];
 
   # Networking
   networking.hostName = "arcadia";
