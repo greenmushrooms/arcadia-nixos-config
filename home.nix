@@ -37,7 +37,7 @@
         sleep 0.5
       done
 
-      ${pkgs.moonlight-qt}/bin/moonlight-qt
+      moonlight
     '')
   ];
 
