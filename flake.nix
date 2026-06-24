@@ -3,6 +3,7 @@
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-25.11";
+    nixpkgs-unstable.url = "github:NixOS/nixpkgs/nixos-unstable";
 
     home-manager = {
       url = "github:nix-community/home-manager/release-25.11";
@@ -15,12 +16,23 @@
     };
   };
 
-  outputs = { nixpkgs, home-manager, nvim-config, ... }: {
+  outputs = { nixpkgs, nixpkgs-unstable, home-manager, nvim-config, ... }: {
     nixosConfigurations.arcadia = nixpkgs.lib.nixosSystem {
       system = "x86_64-linux";
       specialArgs = { inherit nvim-config; };
       modules = [
         ./configuration.nix
+        {
+          nixpkgs.overlays = [
+            (final: prev: let
+              pkgsUnstable = nixpkgs-unstable.legacyPackages.${prev.system};
+            in {
+              github-runner = pkgsUnstable.github-runner.override {
+                nodejs_20 = pkgsUnstable.nodejs_24;
+              };
+            })
+          ];
+        }
         home-manager.nixosModules.home-manager
         {
           home-manager.useGlobalPkgs = true;

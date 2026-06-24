@@ -94,7 +94,7 @@ in
   # Power - keep CPU efficient but NEVER sleep
   services.thermald.enable = true;
   powerManagement.enable = true;
-  powerManagement.cpuFreqGovernor = "powersave";
+  powerManagement.cpuFreqGovernor = "ondemand";
 
   # Disable ALL sleep/suspend (the nuclear option)
   systemd.targets.sleep.enable = false;
@@ -200,7 +200,7 @@ in
     serviceConfig = {
       Type = "oneshot";
       ExecStartPre = "-/run/current-system/sw/bin/systemctl reset-failed nixos-rebuild-switch-to-configuration.service";
-      ExecStart = "/run/current-system/sw/bin/nixos-rebuild switch --refresh --flake github:greenmushrooms/arcadia-nixos-config#arcadia";
+      ExecStart = "/run/current-system/sw/bin/nixos-rebuild switch --refresh --no-write-lock-file --flake github:greenmushrooms/arcadia-nixos-config#arcadia";
     };
   };
 
