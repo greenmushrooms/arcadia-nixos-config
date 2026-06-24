@@ -24,8 +24,12 @@
         ./configuration.nix
         {
           nixpkgs.overlays = [
-            (final: prev: {
-              github-runner = nixpkgs-unstable.legacyPackages.${prev.system}.github-runner;
+            (final: prev: let
+              pkgsUnstable = nixpkgs-unstable.legacyPackages.${prev.system};
+            in {
+              github-runner = pkgsUnstable.github-runner.override {
+                nodejs_20 = pkgsUnstable.nodejs_24;
+              };
             })
           ];
         }
