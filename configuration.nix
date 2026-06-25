@@ -6,6 +6,21 @@ let
     inputstream-ffmpegdirect
   ]);
   claude-code = import ./packages/claude-code.nix { inherit pkgs; };
+
+  # Couch-remote launcher chords (keyd, see services.keyd below). keyd runs as root,
+  # so each action is bounced into arcadia's graphical session with systemd-run --user.
+  couchStart = pkgs.writeShellScript "couch-start" ''
+    exec ${pkgs.systemd}/bin/systemd-run --user -M arcadia@.host --collect -q -- \
+      ${pkgs.kdePackages.konsole}/bin/konsole -e game
+  '';
+  couchStop = pkgs.writeShellScript "couch-stop" ''
+    exec ${pkgs.systemd}/bin/systemd-run --user -M arcadia@.host --collect -q -- \
+      ${pkgs.bash}/bin/bash -c '${pkgs.procps}/bin/pkill -x moonlight; ${pkgs.openssh}/bin/ssh slava@192.168.1.42 /home/slava/Documents/projects/dotfiles/game-stream/stream-down.sh'
+  '';
+  couchKodi = pkgs.writeShellScript "couch-kodi" ''
+    exec ${pkgs.systemd}/bin/systemd-run --user -M arcadia@.host --collect -q -- \
+      ${kodiWithPlugins}/bin/kodi
+  '';
 in
 {
   imports = [
@@ -78,6 +93,26 @@ in
   services.libinput = {
     enable = true;
     mouse.naturalScrolling = true;
+  };
+
+  # Couch-remote launcher chords. The remote's keyboard has no Super key, so we use
+  # Right Alt (AltGr — unused on en_CA) as a layer modifier: hold AltGr, then 1/0/2.
+  # keyd rewrites at the /dev/input layer, below the compositor, so it works in both
+  # Plasma (Wayland) and the Kodi session. The couch-* scripts (see let block above)
+  # bounce each action into arcadia's graphical session since keyd runs as root.
+  services.keyd = {
+    enable = true;
+    keyboards.default = {
+      ids = [ "*" ];
+      settings = {
+        main."rightalt" = "layer(launch)";
+        launch = {
+          "1" = "command(${couchStart})";   # AltGr+1 → Konsole running `game`
+          "0" = "command(${couchStop})";    # AltGr+0 → teardown stream + close Moonlight
+          "2" = "command(${couchKodi})";     # AltGr+2 → Kodi
+        };
+      };
+    };
   };
 
   # Audio (PipeWire)
