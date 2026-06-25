@@ -96,7 +96,7 @@ in
   };
 
   # Couch-remote launcher chords. The remote's keyboard has no Super key, so we use
-  # Right Alt (AltGr — unused on en_CA) as a layer modifier: hold AltGr, then 1/0/2.
+  # Right Alt (AltGr — unused on en_CA) as a layer modifier: hold AltGr, then g/Shift+g/k.
   # keyd rewrites at the /dev/input layer, below the compositor, so it works in both
   # Plasma (Wayland) and the Kodi session. The couch-* scripts (see let block above)
   # bounce each action into arcadia's graphical session since keyd runs as root.
@@ -107,10 +107,12 @@ in
       settings = {
         main."rightalt" = "layer(launch)";
         launch = {
-          "1" = "command(${couchStart})";   # AltGr+1 → Konsole running `game`
-          "0" = "command(${couchStop})";    # AltGr+0 → teardown stream + close Moonlight
-          "2" = "command(${couchKodi})";     # AltGr+2 → Kodi
+          "g" = "command(${couchStart})";   # AltGr+g → Konsole running `game`
+          "k" = "command(${couchKodi})";    # AltGr+k → Kodi
         };
+        # AltGr+Shift+g → teardown. A composite layer is keyd's reliable way to make
+        # the shifted chord distinct from plain AltGr+g (a same-layer S-g would not).
+        "launch+shift"."g" = "command(${couchStop})";
       };
     };
   };
