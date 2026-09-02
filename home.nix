@@ -2,6 +2,7 @@
 {
   home.username = "arcadia";
   home.homeDirectory = "/home/arcadia";
+  home.sessionPath = [ "$HOME/.local/bin" ];
 
   xdg.configFile."nvim" = {
     source = nvim-config;

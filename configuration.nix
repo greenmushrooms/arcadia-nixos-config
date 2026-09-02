@@ -5,7 +5,6 @@ let
     inputstream-adaptive
     inputstream-ffmpegdirect
   ]);
-  claude-code = import ./packages/claude-code.nix { inherit pkgs; };
 in
 {
   imports = [
@@ -175,7 +174,6 @@ in
     heroic
     protonup-qt
     antimicrox
-    claude-code
     python3
   ];
 
