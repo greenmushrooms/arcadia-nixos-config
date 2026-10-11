@@ -4,8 +4,9 @@ Keeps a long poll open to the couchboard service (/activity/wait answers the mom
 the Reolink NVR reports a ring, person, package, vehicle or animal). On a new event:
 
 - a ring plays a half-volume chime first;
-- if nothing is playing, Kodi plays the live doorbell stream (go2rtc RTSP relay)
-  full screen, stopped 30 s after the activity ends (Back/Stop end it earlier);
+- if nothing is playing, mpv shows the live doorbell stream full screen over Kodi
+  (low-latency mode, ~1 s behind real time; Kodi's player buffers 3-4 s), closed
+  30 s after the activity ends (Back/OK on the remote close it earlier);
 - if something is playing, a picture-in-picture card top-right shows the doorbell
   picture refreshed every 1.5 s instead, so the movie isn't interrupted.
 """
@@ -33,6 +34,10 @@ WAIT = 10          # long-poll window; short enough for a quick Kodi shutdown
 ADDON = xbmcaddon.Addon()
 BLACK = os.path.join(ADDON.getAddonInfo("path"), "resources", "black.png")
 CHIME = os.path.join(ADDON.getAddonInfo("path"), "resources", "chime.wav")
+MPV_INPUT = os.path.join(ADDON.getAddonInfo("path"), "resources", "mpv-input.conf")
+MPV = ["/run/current-system/sw/bin/mpv", "--no-terminal", "--fs", "--ontop", "--no-audio",
+       "--profile=low-latency", "--untimed", "--no-cache", "--rtsp-transport=tcp", "--hwdec=auto",
+       "--no-osc", "--osd-level=0", f"--input-conf={MPV_INPUT}", "--title=Doorbell", STREAM]
 CHIME_KINDS = {"doorbell"}   # ring only; a chime for every passer-by would get old fast
 CACHE = xbmcvfs.translatePath(ADDON.getAddonInfo("profile"))
 CHILDREN = []
@@ -92,6 +97,7 @@ class Doorbell:
         self.player = xbmc.Player()
         self.popup = None
         self.streaming = False
+        self.viewer = None          # the mpv process
         self.quiet_since = 0.0
         self.slot, self.last_frame = 0, 0.0
 
@@ -99,10 +105,7 @@ class Doorbell:
         return self.popup is not None or self.streaming
 
     def ours(self):
-        try:
-            return self.player.isPlaying() and self.player.getPlayingFile().startswith(STREAM)
-        except RuntimeError:
-            return False
+        return self.viewer is not None and self.viewer.poll() is None
 
     def on_event(self, ev):
         label = plain(ev["label"])
@@ -113,9 +116,12 @@ class Doorbell:
         if self.ours():
             return                                   # already showing the door
         if not self.player.isPlaying():
-            self.player.play(STREAM, xbmcgui.ListItem(f"{label} · {at}"))   # full screen, live
-            self.streaming = True
-            return
+            try:
+                self.viewer = subprocess.Popen(MPV, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                self.streaming = True
+                return
+            except OSError as e:
+                xbmc.log(f"couchboard mpv: {e!r}", xbmc.LOGWARNING)   # fall through to the card
         if self.popup:
             self.popup.close()
         self.popup = Popup(label, at)
@@ -128,9 +134,9 @@ class Doorbell:
         quiet_long = bool(self.quiet_since) and time.time() - self.quiet_since > QUIET_CLOSE
         if self.streaming:
             if not self.ours():
-                self.streaming = False               # ended with Back/Stop
-            elif quiet_long:
-                self.player.stop()
+                self.streaming = False               # closed with Back/OK
+            elif quiet_long or self.player.isPlaying():   # quiet, or someone started a video
+                self.viewer.terminate()
                 self.streaming = False
         if self.popup:
             if self.popup.closed or quiet_long:
