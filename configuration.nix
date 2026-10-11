@@ -218,6 +218,7 @@ in
     heroic
     protonup-qt
     antimicrox
+    mpv                 # low-latency doorbell viewer (couchboard addon)
     claude-code
     python3
   ];
