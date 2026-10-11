@@ -2,11 +2,11 @@
   description = "Arcadia NixOS configuration";
 
   inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/nixos-25.11";
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-26.05";
     nixpkgs-unstable.url = "github:NixOS/nixpkgs/nixos-unstable";
 
     home-manager = {
-      url = "github:nix-community/home-manager/release-25.11";
+      url = "github:nix-community/home-manager/release-26.05";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
@@ -25,19 +25,16 @@
         {
           nixpkgs.overlays = [
             (final: prev: let
-              pkgsUnstable = nixpkgs-unstable.legacyPackages.${prev.system};
               # Separate import: legacyPackages ignores allowUnfree, and claude-code is unfree.
-              pkgsUnstableUnfree = import nixpkgs-unstable {
+              pkgsUnstable = import nixpkgs-unstable {
                 system = prev.stdenv.hostPlatform.system;
                 config.allowUnfree = true;
               };
             in {
-              # nixpkgs tracks the native-binary release within days; the old npm
-              # derivation broke once the tarball stopped shipping cli.js.
-              claude-code = pkgsUnstableUnfree.claude-code;
-              github-runner = pkgsUnstable.github-runner.override {
-                nodejs_20 = pkgsUnstable.nodejs_24;
-              };
+              # Both track upstream within days on unstable; stable lags (26.05 ships
+              # claude-code 2.1.223), and GitHub rejects runners a few releases old.
+              claude-code = pkgsUnstable.claude-code;
+              github-runner = pkgsUnstable.github-runner;
             })
           ];
         }

@@ -137,10 +137,6 @@ in
   systemd.targets.suspend.enable = false;
   systemd.targets.hibernate.enable = false;
   systemd.targets.hybrid-sleep.enable = false;
-  systemd.services."systemd-suspend".enable = false;
-  systemd.services."systemd-hibernate".enable = false;
-  systemd.services."systemd-hybrid-sleep".enable = false;
-  systemd.services."systemd-suspend-then-hibernate".enable = false;
 
   services.logind = {
     settings.Login = {
