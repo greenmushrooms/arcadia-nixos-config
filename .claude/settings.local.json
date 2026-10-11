@@ -1,0 +1,32 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python3:*)",
+      "Bash(git checkout:*)",
+      "Bash(gh pr create:*)",
+      "Bash(gh pr merge:*)",
+      "Bash(git pull:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "Bash(gh run:*)",
+      "Bash(gh api:*)",
+      "Bash(git stash:*)",
+      "Bash(nix search:*)",
+      "Bash(git -C /home/slava/Documents/projects/arcadia-nixos-config checkout -b remove-nano)",
+      "Bash(git -C /home/slava/Documents/projects/arcadia-nixos-config add configuration.nix)",
+      "Bash(git -C:*)",
+      "Bash(git fetch:*)",
+      "Bash(git cherry-pick:*)",
+      "Bash(git branch:*)",
+      "Bash(gh pr:*)",
+      "Bash(git merge:*)",
+      "Bash(git log:*)",
+      "Bash(nix flake *)",
+      "Bash(command -v nix)",
+      "Read(//run/current-system/sw/bin/**)",
+      "Bash(ls /nix)",
+      "Read(//etc/**)"
+    ]
+  }
+}
