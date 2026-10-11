@@ -14,6 +14,7 @@ let
     }))
     inputstream-adaptive
     inputstream-ffmpegdirect
+    (callPackage ./packages/kodi-couchboard.nix { })
   ]);
 
   # Couch-remote launcher chords (keyd, see services.keyd below). keyd runs as root,
