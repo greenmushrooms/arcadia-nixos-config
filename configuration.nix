@@ -5,7 +5,6 @@ let
     inputstream-adaptive
     inputstream-ffmpegdirect
   ]);
-  claude-code = import ./packages/claude-code.nix { inherit pkgs; };
 
   # Couch-remote launcher chords (keyd, see services.keyd below). keyd runs as root,
   # so each action is bounced into arcadia's graphical session with systemd-run --user.

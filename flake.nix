@@ -26,7 +26,15 @@
           nixpkgs.overlays = [
             (final: prev: let
               pkgsUnstable = nixpkgs-unstable.legacyPackages.${prev.system};
+              # Separate import: legacyPackages ignores allowUnfree, and claude-code is unfree.
+              pkgsUnstableUnfree = import nixpkgs-unstable {
+                system = prev.stdenv.hostPlatform.system;
+                config.allowUnfree = true;
+              };
             in {
+              # nixpkgs tracks the native-binary release within days; the old npm
+              # derivation broke once the tarball stopped shipping cli.js.
+              claude-code = pkgsUnstableUnfree.claude-code;
               github-runner = pkgsUnstable.github-runner.override {
                 nodejs_20 = pkgsUnstable.nodejs_24;
               };
