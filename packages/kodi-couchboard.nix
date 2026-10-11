@@ -5,7 +5,7 @@
 buildKodiAddon {
   pname = "couchboard";
   namespace = "screensaver.couchboard";
-  version = "1.2.0";
+  version = "1.2.1";
   src = ./screensaver.couchboard;
 
   meta = {

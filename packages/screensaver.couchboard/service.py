@@ -8,6 +8,7 @@ the activity ends, or on any button press.
 """
 import json
 import os
+import re
 import time
 import urllib.request
 from datetime import datetime
@@ -78,7 +79,9 @@ def main():
                     if popup:
                         popup.close()
                     at = datetime.fromisoformat(newest["at"]).strftime("%H:%M")
-                    popup = Popup(newest["label"], at)
+                    # Kodi's skin fonts have no emoji: drop them ("🔔 Doorbell" -> "Doorbell")
+                    label = re.sub(r"[\U00010000-\U0010FFFF\u2600-\u27BF\uFE0F]", "", newest["label"]).strip()
+                    popup = Popup(label, at)
                     try:
                         popup.picture.setImage(download(f"/activity/{newest['id']}.jpg",
                                                         os.path.join(CACHE, "event.jpg")), False)
