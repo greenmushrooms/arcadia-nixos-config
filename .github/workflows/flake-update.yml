@@ -5,11 +5,19 @@ on:
   schedule:
     - cron: "0 6 * * 1"
 
+# dev is protected (PR + required "check" status), so the update goes through a PR.
+# PRs and pushes made with GITHUB_TOKEN don't trigger other workflows, so check.yml
+# never runs on this branch: the job runs `nix flake check` itself and posts the
+# "check" commit status that branch protection requires.
 jobs:
   update:
     runs-on: [self-hosted, nixos]
     permissions:
       contents: write
+      pull-requests: write
+      statuses: write
+    env:
+      BRANCH: flake-update
     steps:
       - uses: actions/checkout@v4
         with:
@@ -21,15 +29,68 @@ jobs:
           export PATH="/run/current-system/sw/bin:$PATH"
           nix flake update
 
-      - name: Commit and push
+      - name: Check for changes
+        id: diff
         run: |
-          export PATH="/run/current-system/sw/bin:$PATH"
           if git diff --quiet flake.lock; then
             echo "No flake.lock changes"
-            exit 0
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
           fi
+
+      - name: Nix flake check
+        if: steps.diff.outputs.changed == 'true'
+        run: |
+          export PATH="/run/current-system/sw/bin:$PATH"
+          nix flake check
+
+      - name: Commit and push branch
+        if: steps.diff.outputs.changed == 'true'
+        id: push
+        run: |
+          export PATH="/run/current-system/sw/bin:$PATH"
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git switch -C "$BRANCH"
           git add flake.lock
-          git commit -m "flake update"
-          git push origin dev
+          git commit -m "flake update $(date -u +%F)"
+          # Fixed branch name: a newer run replaces an unmerged older update.
+          git push --force origin "$BRANCH"
+          echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+
+      - name: Mark check passed
+        if: steps.diff.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SHA: ${{ steps.push.outputs.sha }}
+        run: |
+          export PATH="/run/current-system/sw/bin:$PATH"
+          curl -sf -X POST -H "Authorization: Bearer $GH_TOKEN" \
+            "https://api.github.com/repos/${{ github.repository }}/statuses/$SHA" \
+            -d '{"state":"success","context":"check","description":"nix flake check passed in Flake Update"}'
+
+      - name: Create or update PR to dev
+        if: steps.diff.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+        run: |
+          export PATH="/run/current-system/sw/bin:$PATH"
+          API="https://api.github.com/repos/$REPO"
+          AUTH="Authorization: Bearer $GH_TOKEN"
+
+          response=$(curl -sf -H "$AUTH" "$API/pulls?head=${REPO%%/*}:$BRANCH&base=dev&state=open")
+          if echo "$response" | grep -q '"number"'; then
+            echo "Open PR already exists; branch force-pushed with the new lock"
+            exit 0
+          fi
+          result=$(curl -s -w "\n%{http_code}" -X POST -H "$AUTH" -H "Content-Type: application/json" \
+            "$API/pulls" \
+            -d "{\"title\":\"flake update $(date -u +%F)\",\"head\":\"$BRANCH\",\"base\":\"dev\",\"body\":\"Automated weekly \`nix flake update\`. \`nix flake check\` passed on the runner.\"}")
+          http_code=$(echo "$result" | tail -1)
+          echo "$result" | sed '$d'
+          if [ "$http_code" -ge 400 ]; then
+            echo "PR creation failed with HTTP $http_code"
+            exit 1
+          fi
