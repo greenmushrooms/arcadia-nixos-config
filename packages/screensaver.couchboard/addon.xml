@@ -1,11 +1,12 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<addon id="screensaver.couchboard" name="Couchboard" version="1.1.0" provider-name="arcadia">
+<addon id="screensaver.couchboard" name="Couchboard" version="1.2.0" provider-name="arcadia">
   <requires>
     <import addon="xbmc.python" version="3.0.0"/>
   </requires>
   <extension point="xbmc.ui.screensaver" library="screensaver.py"/>
+  <extension point="xbmc.service" library="service.py" start="login"/>
   <extension point="xbmc.addon.metadata">
-    <summary lang="en_GB">Clock, weather, this week's TV and calendar, drifting on black</summary>
+    <summary lang="en_GB">Family board screensaver, and a doorbell popup over anything that's on</summary>
     <description lang="en_GB">Reads the couchboard feed on prometheus. The block drifts slowly so nothing stays in one place on the panel.</description>
     <platform>all</platform>
   </extension>
