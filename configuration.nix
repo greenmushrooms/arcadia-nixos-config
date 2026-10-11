@@ -1,7 +1,17 @@
 { config, pkgs, ... }:
 let
-  kodiWithPlugins = pkgs.kodi.withPackages (kodiPkgs: with kodiPkgs; [
-    jellycon
+  # Native Wayland build: the X11 one ran under XWayland in Plasma and lagged on
+  # the N100. It still carries the X11 backend for the standalone Kodi session.
+  kodiWithPlugins = pkgs.kodi-wayland.withPackages (kodiPkgs: with kodiPkgs; [
+    # 26.05 ships 0.9.1; 1.0 dropped the deprecated auth Jellyfin 12 rejects.
+    # Drop this override once stable carries >= 1.0.
+    (jellycon.overrideAttrs (old: {
+      version = "1.0.2";
+      src = old.src.override {
+        rev = "v1.0.2";
+        sha256 = "sha256-dpH611GZ+BG63bSFypcZ9VUtNCA/tL8zgKuaU7cCRII=";
+      };
+    }))
     inputstream-adaptive
     inputstream-ffmpegdirect
   ]);
