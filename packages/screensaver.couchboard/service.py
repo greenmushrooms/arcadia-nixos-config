@@ -9,6 +9,7 @@ the activity ends, or on any button press.
 import json
 import os
 import re
+import subprocess
 import time
 import urllib.request
 from datetime import datetime
@@ -24,6 +25,17 @@ FRESH = 90         # only pop for events newer than this
 
 ADDON = xbmcaddon.Addon()
 BLACK = os.path.join(ADDON.getAddonInfo("path"), "resources", "black.png")
+CHIME = os.path.join(ADDON.getAddonInfo("path"), "resources", "chime.wav")
+CHIME_KINDS = {"doorbell"}   # ring only; a chime for every passer-by would get old fast
+
+
+def chime():
+    """Ding-dong at half volume through PipeWire, alongside whatever is playing."""
+    try:
+        subprocess.Popen(["pw-play", "--volume", "0.5", CHIME],
+                         stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    except OSError as e:
+        xbmc.log(f"couchboard chime: {e!r}", xbmc.LOGWARNING)
 CACHE = xbmcvfs.translatePath(ADDON.getAddonInfo("profile"))
 
 
@@ -88,6 +100,8 @@ def main():
                     except Exception:
                         pass
                     popup.show()
+                    if newest.get("kind") in CHIME_KINDS:
+                        chime()
                     quiet_since, last_frame = 0.0, 0.0
             if popup:
                 quiet_since = 0.0 if a["active"] else (quiet_since or time.time())
