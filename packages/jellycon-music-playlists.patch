@@ -1,0 +1,26 @@
+--- a/resources/lib/menu_functions.py
++++ b/resources/lib/menu_functions.py
+@@ -818,6 +818,12 @@
+ 
+     item_limit = settings.getSetting("show_x_filtered_items")
+ 
++    # Jellyfin playlists first (they live in their own library, not under Music)
++    views = api.get("/Users/{}/Views?format=json".format(get_current_user_id())) or {}
++    for playlists in views.get("Items", []):
++        if playlists.get("CollectionType") == "playlists":
++            add_menu_directory_item(playlists.get("Name"), get_playlist_path(playlists))
++
+     # all albums
+     params = {
+         "ParentId": view.get("Id"),
+@@ -827,10 +833,6 @@
+     }
+     path = get_jellyfin_url("/Users/{userid}/Items", params)
+ 
+-    if settings.getSetting("interface_mode") == "1":
+-        get_content(path, { "media_type": "MusicAlbums" })
+-        return
+-
+     url = sys.argv[0] + "?url=" + quote(path) + "&mode=GET_CONTENT&media_type=MusicAlbums"
+     add_menu_directory_item(view_name + translate_string(30320), url)
+ 

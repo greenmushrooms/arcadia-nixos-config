@@ -11,6 +11,8 @@ let
         rev = "v1.0.2";
         sha256 = "sha256-dpH611GZ+BG63bSFypcZ9VUtNCA/tL8zgKuaU7cCRII=";
       };
+      # Music menu starts with Jellyfin's Playlists (normally a separate library).
+      patches = (old.patches or [ ]) ++ [ ./packages/jellycon-music-playlists.patch ];
     }))
     inputstream-adaptive
     inputstream-ffmpegdirect
