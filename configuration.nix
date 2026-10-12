@@ -21,8 +21,8 @@ let
     inputstream-adaptive
     inputstream-ffmpegdirect
     (callPackage ./packages/kodi-couchboard.nix { })
-    # Music visualizations (Settings > Player > Music > Visualization)
-    visualization-projectm
+    # Music visualization: plain bars (projectM was too busy). Settings in
+    # addon_data/visualization.spectrum: no rotation, slow.
     visualization-spectrum
   ]);
   # Kodi's native PipeWire sink loses the HDMI output when the TV is switched on
