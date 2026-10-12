@@ -2,7 +2,7 @@
 let
   # Native Wayland build: the X11 one ran under XWayland in Plasma and lagged on
   # the N100. It still carries the X11 backend for the standalone Kodi session.
-  kodiWithPlugins = pkgs.kodi-wayland.withPackages (kodiPkgs: with kodiPkgs; [
+  kodiEnv = pkgs.kodi-wayland.withPackages (kodiPkgs: with kodiPkgs; [
     # 26.05 ships 0.9.1; 1.0 dropped the deprecated auth Jellyfin 12 rejects.
     # Drop this override once stable carries >= 1.0.
     (jellycon.overrideAttrs (old: {
@@ -17,7 +17,24 @@ let
     inputstream-adaptive
     inputstream-ffmpegdirect
     (callPackage ./packages/kodi-couchboard.nix { })
+    # Music visualizations (Settings > Player > Music > Visualization)
+    visualization-projectm
+    visualization-spectrum
   ]);
+  # Kodi's native PipeWire sink loses the HDMI output when the TV is switched on
+  # (the sink is re-created) and every later stream fails with "could not create
+  # stream" until Kodi restarts. Through pipewire-pulse the stream just follows the
+  # new default sink.
+  kodiWithPlugins = pkgs.symlinkJoin {
+    name = "kodi-with-plugins";
+    paths = [ kodiEnv ];
+    nativeBuildInputs = [ pkgs.makeWrapper ];
+    postBuild = ''
+      for b in kodi kodi-standalone; do
+        [ -e $out/bin/$b ] && wrapProgram $out/bin/$b --set KODI_AE_SINK PULSE
+      done
+    '';
+  };
 
   # Couch-remote launcher chords (keyd, see services.keyd below). keyd runs as root,
   # so each action is bounced into arcadia's graphical session with systemd-run --user.
