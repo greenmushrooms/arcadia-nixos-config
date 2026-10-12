@@ -12,7 +12,11 @@ let
         sha256 = "sha256-dpH611GZ+BG63bSFypcZ9VUtNCA/tL8zgKuaU7cCRII=";
       };
       # Music menu starts with Jellyfin's Playlists (normally a separate library).
-      patches = (old.patches or [ ]) ++ [ ./packages/jellycon-music-playlists.patch ];
+      # Playlists and albums start with "Play all" / "Shuffle" rows; playlists play in order.
+      patches = (old.patches or [ ]) ++ [
+        ./packages/jellycon-music-playlists.patch
+        ./packages/jellycon-play-all.patch
+      ];
     }))
     inputstream-adaptive
     inputstream-ffmpegdirect

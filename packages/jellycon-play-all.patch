@@ -1,0 +1,31 @@
+--- a/resources/lib/dir_functions.py
++++ b/resources/lib/dir_functions.py
+@@ -136,6 +136,17 @@
+     if dir_items is None:
+         return
+ 
++    # "Play all" and "Shuffle" rows at the top of a playlist or album (otherwise only
++    # in the context menu, which nobody finds with a remote)
++    parent = re.search(r"ParentId=([0-9a-f]{32})", unquote(url))
++    if parent and media_type in ("playlist", "musicalbum"):
++        for pos, (label, action) in enumerate((("Play all", "play"), ("Shuffle", "shuffle"))):
++            list_item = xbmcgui.ListItem(label, offscreen=True)
++            list_item.setProperty("SpecialSort", "top")
++            list_item.setArt({"icon": "DefaultMusicPlaylists.png", "thumb": "DefaultMusicPlaylists.png"})
++            u = sys.argv[0] + "?mode=PLAY&action=" + action + "&item_id=" + parent.group(1)
++            dir_items.insert(pos, (u, list_item, False))
++
+     log.debug("total_records: {0}".format(total_records))
+ 
+     if not url_limit or start_index > 0:
+--- a/resources/lib/play_utils.py
++++ b/resources/lib/play_utils.py
+@@ -315,6 +315,8 @@
+ 
+         if action == 'shuffle':
+             url_params['SortBy'] = 'Random'
++        elif result.get("Type") == "Playlist":
++            del url_params['SortBy']   # keep the playlist's own order
+ 
+         url = get_jellyfin_url(url_root, url_params)
+         result = api.get(url)
