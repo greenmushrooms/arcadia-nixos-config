@@ -58,6 +58,7 @@ in
 {
   imports = [
     ./hardware-configuration.nix
+    ./jellyfin-transcode.nix
   ];
 
   # Bootloader
