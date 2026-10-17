@@ -233,7 +233,7 @@ in
   users.users.arcadia = {
     isNormalUser = true;
     description = "Media Center";
-    extraGroups = [ "networkmanager" "wheel" "video" "audio" "input" "render" ];
+    extraGroups = [ "networkmanager" "wheel" "video" "audio" "input" "render" "uinput" ];  # uinput: AntiMicroX virtual keyboard/mouse for controller-mapped games
   };
 
   # Packages
