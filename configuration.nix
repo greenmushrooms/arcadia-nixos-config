@@ -253,6 +253,11 @@ in
     mpv                 # low-latency doorbell viewer (couchboard addon)
     claude-code
     python3
+    # Retro games, added to Heroic as sideloaded apps. Open-source cores only:
+    # Mesen (NES), bsnes (SNES), Mupen64Plus (N64), mGBA (GB/GBC/GBA). ROMs are the user's own dumps.
+    (retroarch.withCores (cores: with cores; [ mesen bsnes mupen64plus mgba ]))
+    supertux            # free Mario-style platformer, no ROMs needed
+    supertuxkart
   ];
 
   programs.nix-ld.enable = true;
