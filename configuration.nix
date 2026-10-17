@@ -97,6 +97,9 @@ in
   # Intel Graphics
   hardware.graphics = {
     enable = true;
+    # 32-bit Mesa (/run/opengl-driver-32) for 32-bit Windows games under Proton:
+    # without it MM6 dies at startup with "failed to open iris ... i386-linux-gnu".
+    enable32Bit = true;
     extraPackages = with pkgs; [
       intel-media-driver
       vpl-gpu-rt
