@@ -24,6 +24,10 @@ let
     # Music visualization: plain bars (projectM was too busy). Settings in
     # addon_data/visualization.spectrum: no rotation, slow.
     visualization-spectrum
+    # "Up next in 30 s" pop-up at the end of an episode; JellyCon hands it the next
+    # episode (upnext_data) and plays it on the signal. JellyCon's own Yes/No prompt
+    # is switched off in kodiSettingsGuard so the two don't compete.
+    upnext
   ]);
   # Pins Kodi settings before it starts (2026-10-18). Kodi rewrites guisettings.xml on
   # exit, so the file can't be a home.file; instead every launch puts these back:
@@ -54,6 +58,8 @@ let
     # (~0.2 s more per list, measured 2026-10-18)
     G=$HOME/.kodi/userdata/addon_data/plugin.video.jellycon/settings.xml
     [ -f "$G" ] && pin include_people true
+    # ...and leave "play next episode" to Up Next (100 = JellyCon's prompt off)
+    [ -f "$G" ] && pin promptPlayNextEpisodePercentage 100
   '';
   # Kodi's native PipeWire sink loses the HDMI output when the TV is switched on
   # (the sink is re-created) and every later stream fails with "could not create
