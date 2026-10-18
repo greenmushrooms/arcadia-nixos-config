@@ -24,7 +24,43 @@ let
     # Music visualization: plain bars (projectM was too busy). Settings in
     # addon_data/visualization.spectrum: no rotation, slow.
     visualization-spectrum
+    # "Up next in 30 s" pop-up at the end of an episode; JellyCon hands it the next
+    # episode (upnext_data) and plays it on the signal. JellyCon's own Yes/No prompt
+    # is switched off in kodiSettingsGuard so the two don't compete.
+    upnext
   ]);
+  # Pins Kodi settings before it starts (2026-10-18). Kodi rewrites guisettings.xml on
+  # exit, so the file can't be a home.file; instead every launch puts these back:
+  #   audiooutput.config=1 (fixed 48 kHz): "best match" switched rate for each video,
+  #     which hung pipewire-pulse for 20-30 s of silence and left playback ~8% fast
+  #     and high-pitched for the rest of the session.
+  #   filecache.memorysize=150 MB, readfactor=1000 (10x read-ahead): the 20 MB / 4x
+  #     defaults are for low-RAM boxes; big Jellyfin files start and seek smoother.
+  #   videoplayer.seekdelay=250 ms: the 750 ms default made every seek feel laggy;
+  #     250 still lets repeated presses stack into one bigger jump.
+  kodiSettingsGuard = pkgs.writeShellScript "kodi-settings-guard" ''
+    G=$HOME/.kodi/userdata/guisettings.xml
+    [ -f "$G" ] || exit 0
+    ${pkgs.procps}/bin/pgrep -x kodi.bin >/dev/null && exit 0
+    pin() {
+      if ${pkgs.gnugrep}/bin/grep -q "<setting id=\"$1\"" "$G"; then
+        ${pkgs.gnused}/bin/sed -i -E "s|<setting id=\"$1\"[^>]*>[^<]*</setting>|<setting id=\"$1\">$2</setting>|" "$G"
+      else
+        ${pkgs.gnused}/bin/sed -i "s|</settings>|    <setting id=\"$1\">$2</setting>\n</settings>|" "$G"
+      fi
+    }
+    pin audiooutput.config 1
+    pin audiooutput.samplerate 48000
+    pin filecache.memorysize 150
+    pin filecache.readfactor 1000
+    pin videoplayer.seekdelay 250
+    # JellyCon: send cast with list items, or the info screen has no people
+    # (~0.2 s more per list, measured 2026-10-18)
+    G=$HOME/.kodi/userdata/addon_data/plugin.video.jellycon/settings.xml
+    [ -f "$G" ] && pin include_people true
+    # ...and leave "play next episode" to Up Next (100 = JellyCon's prompt off)
+    [ -f "$G" ] && pin promptPlayNextEpisodePercentage 100
+  '';
   # Kodi's native PipeWire sink loses the HDMI output when the TV is switched on
   # (the sink is re-created) and every later stream fails with "could not create
   # stream" until Kodi restarts. Through pipewire-pulse the stream just follows the
@@ -35,7 +71,8 @@ let
     nativeBuildInputs = [ pkgs.makeWrapper ];
     postBuild = ''
       for b in kodi kodi-standalone; do
-        [ -e $out/bin/$b ] && wrapProgram $out/bin/$b --set KODI_AE_SINK PULSE
+        [ -e $out/bin/$b ] && wrapProgram $out/bin/$b --set KODI_AE_SINK PULSE \
+          --run ${kodiSettingsGuard}
       done
     '';
   };
