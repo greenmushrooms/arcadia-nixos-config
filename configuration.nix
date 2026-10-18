@@ -50,6 +50,10 @@ let
     pin filecache.memorysize 150
     pin filecache.readfactor 1000
     pin videoplayer.seekdelay 250
+    # JellyCon: send cast with list items, or the info screen has no people
+    # (~0.2 s more per list, measured 2026-10-18)
+    G=$HOME/.kodi/userdata/addon_data/plugin.video.jellycon/settings.xml
+    [ -f "$G" ] && pin include_people true
   '';
   # Kodi's native PipeWire sink loses the HDMI output when the TV is switched on
   # (the sink is re-created) and every later stream fails with "could not create
