@@ -168,26 +168,6 @@ in
     alsa.support32Bit = true;
     pulse.enable = true;
     jack.enable = true;
-
-    # Kodi logged thousands of "large audio sync error" (audio 5-21 s adrift) and
-    # "timeout adding data to renderer" at every start and seek, and the sound came
-    # out slightly fast and nasal. WirePlumber suspends an idle sink after 5 s, so
-    # each play woke the HDMI device and the TV had to relock its audio mid-stream;
-    # keep it open -- this box exists to play to that TV.
-    wireplumber.extraConfig."51-hdmi-no-suspend" = {
-      "monitor.alsa.rules" = [{
-        matches = [{ "node.name" = "~alsa_output.*hdmi.*"; }];
-        actions.update-props."session.suspend-timeout-seconds" = 0;
-      }];
-    };
-    # Kodi goes through pipewire-pulse (see KODI_AE_SINK above); pin its quantum so
-    # the delay it reads back stays steady instead of following other clients.
-    extraConfig.pipewire-pulse."92-kodi-quantum" = {
-      "pulse.rules" = [{
-        matches = [{ "application.name" = "~Kodi.*"; }];
-        actions.update-props."pulse.min.quantum" = "1024/48000";
-      }];
-    };
   };
 
   # Power - keep CPU efficient but NEVER sleep
