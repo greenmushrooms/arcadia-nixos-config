@@ -32,6 +32,8 @@ let
   #     and high-pitched for the rest of the session.
   #   filecache.memorysize=150 MB, readfactor=1000 (10x read-ahead): the 20 MB / 4x
   #     defaults are for low-RAM boxes; big Jellyfin files start and seek smoother.
+  #   videoplayer.seekdelay=250 ms: the 750 ms default made every seek feel laggy;
+  #     250 still lets repeated presses stack into one bigger jump.
   kodiSettingsGuard = pkgs.writeShellScript "kodi-settings-guard" ''
     G=$HOME/.kodi/userdata/guisettings.xml
     [ -f "$G" ] || exit 0
@@ -47,6 +49,7 @@ let
     pin audiooutput.samplerate 48000
     pin filecache.memorysize 150
     pin filecache.readfactor 1000
+    pin videoplayer.seekdelay 250
   '';
   # Kodi's native PipeWire sink loses the HDMI output when the TV is switched on
   # (the sink is re-created) and every later stream fails with "could not create
