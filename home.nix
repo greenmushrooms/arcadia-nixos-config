@@ -57,6 +57,24 @@
         <keyboard><escape>Back</escape></keyboard>
         <remote><back>Back</back></remote>
       </Videos>
+      <!-- FF/RW jump in steps (+30 s, +60 s ...) instead of 2x/4x trick-play,
+           which drops frames and audio and always looks choppy. -->
+      <FullscreenVideo>
+        <keyboard>
+          <f>StepForward</f>
+          <r>StepBack</r>
+          <period>StepForward</period>
+          <comma>StepBack</comma>
+        </keyboard>
+        <remote>
+          <forward>StepForward</forward>
+          <reverse>StepBack</reverse>
+        </remote>
+        <appcommand>
+          <media_fast_forward>StepForward</media_fast_forward>
+          <media_rewind>StepBack</media_rewind>
+        </appcommand>
+      </FullscreenVideo>
     </keymap>
   '';
 
