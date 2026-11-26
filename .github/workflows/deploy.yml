@@ -7,13 +7,40 @@ on:
 jobs:
   deploy:
     runs-on: [self-hosted, nixos]
+    timeout-minutes: 50
     steps:
+      # The switch runs in its own systemd unit so it survives the runner being
+      # restarted by the switch itself. This job only starts it and then reports
+      # how it actually ended.
       - name: Trigger rebuild
         run: |
           systemctl restart nixos-rebuild-switch --no-block
-      - name: Wait for rebuild
+
+      - name: Wait for rebuild and report its result
         run: |
-          sleep 60
-          journalctl -u nixos-rebuild-switch -n 80 --no-pager || true
+          export PATH="/run/current-system/sw/bin:$PATH"
+          unit=nixos-rebuild-switch.service
+          # --no-block returns before the job starts: wait for it to begin.
+          for _ in $(seq 1 30); do
+            [ "$(systemctl show -p ActiveState --value "$unit")" = activating ] && break
+            sleep 1
+          done
+          # Wait for the unit to leave "activating" (oneshot = activating while running).
+          for _ in $(seq 1 270); do
+            state=$(systemctl show -p ActiveState --value "$unit")
+            [ "$state" != activating ] && break
+            sleep 10
+          done
+          journalctl -u "$unit" --since "-45min" -n 80 --no-pager -o cat || true
           echo "---"
-          systemctl status nixos-rebuild-switch || true
+          result=$(systemctl show -p Result --value "$unit")
+          echo "current-system: $(readlink /run/current-system)"
+          echo "unit state: $state, result: $result"
+          if [ "$state" = activating ]; then
+            echo "::error::rebuild still running after 45 min"
+            exit 1
+          fi
+          if [ "$result" != success ]; then
+            echo "::error::nixos-rebuild switch failed ($result)"
+            exit 1
+          fi
