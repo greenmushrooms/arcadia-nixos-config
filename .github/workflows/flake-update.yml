@@ -3,7 +3,7 @@ name: Flake Update
 on:
   workflow_dispatch:
   schedule:
-    - cron: "0 6 * * 1"
+    - cron: "17 7 * * 1"
 
 # dev is protected (PR + required "check" status), so the update goes through a PR.
 # PRs and pushes made with GITHUB_TOKEN don't trigger other workflows, so check.yml
@@ -19,7 +19,7 @@ jobs:
     env:
       BRANCH: flake-update
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           ref: dev
           token: ${{ secrets.GITHUB_TOKEN }}
