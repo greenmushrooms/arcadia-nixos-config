@@ -9,8 +9,10 @@ the newest image is older than STALE_AFTER, the board is hidden and a plain dim
 clock drawn by Kodi takes over (moving each minute), so the TV never shows a
 frozen time. The board comes back as soon as fresh renders do.
 """
+import json
 import os
 import random
+import sys
 import time
 import urllib.request
 from datetime import datetime
@@ -83,6 +85,116 @@ class Fallback:
         self.date.setLabel(now.strftime("%a %b %d"))
 
 
+ACTION_LEFT, ACTION_RIGHT, ACTION_UP, ACTION_DOWN = 1, 2, 3, 4
+CLOSE_ACTIONS = {9, 10, 13, 92, 122}  # parent dir, previous menu, stop, back, ...
+
+
+def post_json(path, body):
+    req = urllib.request.Request(URL.rsplit("/", 1)[0] + path, data=json.dumps(body).encode(),
+                                 headers={"Content-Type": "application/json"})
+    with urllib.request.urlopen(req, timeout=5) as r:
+        return json.load(r)
+
+
+def get_config():
+    with urllib.request.urlopen(URL.rsplit("/", 1)[0] + "/config.json", timeout=5) as r:
+        return json.load(r)
+
+
+class Board(xbmcgui.WindowDialog):
+    """The board as a normal window (Back on Home): Left/Right switch the layout,
+    Back closes it. Unlike the screensaver, keys don't just wake it."""
+
+    def __init__(self):
+        super().__init__()
+        w, h = self.getWidth(), self.getHeight()
+        self.addControl(xbmcgui.ControlImage(0, 0, w, h, BLACK))
+        self.board = xbmcgui.ControlImage(0, 0, w, h, "", aspectRatio=2)
+        self.addControl(self.board)
+        self.fallback = Fallback(self, w, h)
+        self.label = xbmcgui.ControlLabel(w - 520, h - 80, 480, 50, "", "font_title", "AAFFFFFF", alignment=1)
+        self.addControl(self.label)
+        self.slot, self.shown_at, self.label_until = 0, 0.0, 0.0
+        self.closed = False
+
+    def refresh(self):
+        self.slot ^= 1
+        path = fetch(self.slot)
+        if path:
+            self.board.setImage(path, False)
+            self.board.setVisible(True)
+            self.fallback.show(False)
+            self.shown_at = time.time()
+        else:
+            self.board.setVisible(False)
+            self.fallback.tick()
+            self.fallback.show(True)
+
+    def step(self, delta):
+        try:
+            cfg = get_config()
+            layouts = cfg["layouts"]
+            new = layouts[(layouts.index(cfg["layout"]) + delta) % len(layouts)]
+            self.label.setLabel(new.replace("-", " ").title())
+            self.label_until = time.time() + 4
+            post_json("/select", {"layout": new})
+        except Exception as e:
+            xbmc.log(f"couchboard: layout switch failed: {e!r}", xbmc.LOGWARNING)
+            return
+        # The service re-renders on /select; pick the new image up as soon as it lands.
+        before = rendered_now()
+        for _ in range(20):
+            xbmc.sleep(250)
+            if rendered_now() > before:
+                break
+        self.refresh()
+
+    def onAction(self, action):
+        a = action.getId()
+        if a in CLOSE_ACTIONS:
+            self.closed = True
+            self.close()
+        elif a in (ACTION_RIGHT, ACTION_DOWN):
+            self.step(1)
+        elif a in (ACTION_LEFT, ACTION_UP):
+            self.step(-1)
+
+
+def rendered_now():
+    try:
+        with urllib.request.urlopen(URL, timeout=5) as r:
+            return float(r.headers.get("X-Rendered-At") or 0)
+    except Exception:
+        return 0.0
+
+
+def board_main():
+    """Back on Home: go to what's playing, as before, otherwise open the board."""
+    if xbmc.Player().isPlaying():
+        xbmc.executebuiltin("Action(FullScreen)")
+        return
+    os.makedirs(CACHE, exist_ok=True)
+    monitor = xbmc.Monitor()
+    xbmc.executebuiltin("InhibitScreensaver(true)")
+    win = Board()
+    try:
+        win.refresh()
+        win.show()
+        minute = int(time.time() // 60)
+        while not win.closed and not monitor.waitForAbort(0.5):
+            if time.time() > win.label_until:
+                win.label.setLabel("")
+            if time.time() % 60 >= 3 and int(time.time() // 60) != minute:
+                minute = int(time.time() // 60)
+                win.refresh()
+            if xbmc.Player().isPlaying():   # something started (doorbell aside): get out of the way
+                break
+    finally:
+        win.close()
+        del win
+        xbmc.executebuiltin("InhibitScreensaver(false)")
+
+
 def main():
     os.makedirs(CACHE, exist_ok=True)
     monitor = Monitor()
@@ -124,4 +236,7 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    if "board" in sys.argv[1:]:
+        board_main()
+    else:
+        main()
