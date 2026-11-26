@@ -42,16 +42,17 @@
   ];
 
   # Kodi keymap (Kodi never writes keymaps, so it's safe to own declaratively).
-  # Back on the home screen returns to whatever is playing; in Videos, Esc goes up
-  # a level instead of jumping home.
+  # Back on the home screen returns to whatever is playing, or, with nothing playing,
+  # opens the couchboard (Left/Right switch its layout, Back comes home). In Videos,
+  # Esc goes up a level instead of jumping home.
   home.file.".kodi/userdata/keymaps/couch.xml".text = ''
     <keymap>
       <Home>
         <keyboard>
-          <escape>FullScreen</escape>
-          <backspace>FullScreen</backspace>
+          <escape>RunScript(screensaver.couchboard,board)</escape>
+          <backspace>RunScript(screensaver.couchboard,board)</backspace>
         </keyboard>
-        <remote><back>FullScreen</back></remote>
+        <remote><back>RunScript(screensaver.couchboard,board)</back></remote>
       </Home>
       <Videos>
         <keyboard><escape>Back</escape></keyboard>

@@ -2,7 +2,13 @@
 let
   # Native Wayland build: the X11 one ran under XWayland in Plasma and lagged on
   # the N100. It still carries the X11 backend for the standalone Kodi session.
-  kodiEnv = pkgs.kodi-wayland.withPackages (kodiPkgs: with kodiPkgs; [
+  #
+  # Built against Python 3.12, not 26.05's 3.13 (2026-11-26): with 3.13, ~1 start in 3
+  # segfaulted a second in, when the add-on services' interpreters all start at once
+  # (core dumps: take_gil -> _PyThreadState_MustExit in CPythonInvoker::execute).
+  # Kodi 21 is widely run on 3.12 (Ubuntu 24.04). Costs a local Kodi compile.
+  kodiWayland = pkgs.kodi-wayland.override { python3Packages = pkgs.python312Packages; };
+  kodiEnv = kodiWayland.withPackages (kodiPkgs: with kodiPkgs; [
     # 26.05 ships 0.9.1; 1.0 dropped the deprecated auth Jellyfin 12 rejects.
     # Drop this override once stable carries >= 1.0.
     (jellycon.overrideAttrs (old: {
