@@ -310,6 +310,11 @@ in
   # Dedicated rebuild service
   systemd.services.nixos-rebuild-switch = {
     description = "NixOS Rebuild Switch";
+    # The switch runs from inside this unit. If its definition changed, the
+    # switch would stop it (SIGTERM) and start a second copy that collides with
+    # the still-running switch-to-configuration unit.
+    restartIfChanged = false;
+    stopIfChanged = false;
     serviceConfig = {
       Type = "oneshot";
       ExecStartPre = "-/run/current-system/sw/bin/systemctl reset-failed nixos-rebuild-switch-to-configuration.service";

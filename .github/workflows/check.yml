@@ -10,6 +10,6 @@ jobs:
   check:
     runs-on: [self-hosted, nixos]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Nix flake check
         run: nix flake check
