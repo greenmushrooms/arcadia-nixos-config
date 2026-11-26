@@ -1,9 +1,11 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<addon id="screensaver.couchboard" name="Couchboard" version="1.5.0" provider-name="arcadia">
+<addon id="screensaver.couchboard" name="Couchboard" version="1.6.0" provider-name="arcadia">
   <requires>
     <import addon="xbmc.python" version="3.0.0"/>
   </requires>
   <extension point="xbmc.ui.screensaver" library="screensaver.py"/>
+  <!-- RunScript(screensaver.couchboard,board): the board as a window, opened by Back on Home -->
+  <extension point="xbmc.python.script" library="screensaver.py"/>
   <extension point="xbmc.service" library="service.py" start="login"/>
   <extension point="xbmc.addon.metadata">
     <summary lang="en_GB">Family board screensaver, and a doorbell popup over anything that's on</summary>
