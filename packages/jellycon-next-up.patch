@@ -1,0 +1,55 @@
+--- a/resources/lib/dir_functions.py
++++ b/resources/lib/dir_functions.py
+@@ -11,6 +11,7 @@
+ from six.moves.urllib.parse import quote, unquote, parse_qsl
+ 
+ from .datamanager import DataManager
++from .jellyfin import api
+ from .lazylogger import LazyLogger
+ from .item_functions import add_gui_item, ItemDetails
+ from .tracking import timer
+@@ -147,6 +148,12 @@
+             u = sys.argv[0] + "?mode=PLAY&action=" + action + "&item_id=" + parent.group(1)
+             dir_items.insert(pos, (u, list_item, False))
+ 
++    # A series opens on a "Next: S06E04 - Title" row above its seasons: Jellyfin's
++    # Next Up for that show, so the remote doesn't have to find the right season.
++    series = re.search(r"/Shows/([0-9a-f]{32})/Seasons", unquote(url))
++    if series and media_type == "series":
++        next_up_row(series.group(1), dir_items)
++
+     log.debug("total_records: {0}".format(total_records))
+ 
+     if not url_limit or start_index > 0:
+@@ -270,6 +277,31 @@
+     xbmcplugin.addSortMethod(pluginhandle, xbmcplugin.SORT_METHOD_LABEL)
+ 
+ 
++def next_up_row(series_id, dir_items):
++    try:
++        data = api.get("/Shows/NextUp?SeriesId={}&UserId={}&Limit=1&Fields=Overview"
++                       "&EnableUserData=true&format=json".format(series_id, api.user_id))
++        episode = (data.get("Items") or [None])[0]
++    except Exception as e:
++        log.error("next up for {0}: {1}".format(series_id, e))
++        episode = None
++    if not episode:
++        return
++    resume = ((episode.get("UserData") or {}).get("PlaybackPositionTicks") or 0) > 0
++    label = "{} S{:02d}E{:02d} - {}".format("Continue" if resume else "Next",
++                                           episode.get("ParentIndexNumber") or 0,
++                                           episode.get("IndexNumber") or 0, episode.get("Name") or "")
++    list_item = xbmcgui.ListItem(label, offscreen=True)
++    list_item.setProperty("SpecialSort", "top")
++    thumb = "{}/Items/{}/Images/Primary?maxWidth=600".format(api.server, episode["Id"])
++    list_item.setArt({"thumb": thumb, "icon": "DefaultTVShows.png", "poster": thumb})
++    video_tag = list_item.getVideoInfoTag()
++    video_tag.setPlot(episode.get("Overview") or "")
++    video_tag.setMediaType("episode")
++    u = sys.argv[0] + "?mode=PLAY&item_id=" + episode["Id"]
++    dir_items.insert(0, (u, list_item, False))
++
++
+ @timer
+ def process_directory(url, progress, params, use_cache_data=False):
+     log.debug("== ENTER: processDirectory ==")

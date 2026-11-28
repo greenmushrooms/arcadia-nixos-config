@@ -19,9 +19,11 @@ let
       };
       # Music menu starts with Jellyfin's Playlists (normally a separate library).
       # Playlists and albums start with "Play all" / "Shuffle" rows; playlists play in order.
+      # A series opens on a "Next S06E04 - Title" row (Jellyfin Next Up for that show).
       patches = (old.patches or [ ]) ++ [
         ./packages/jellycon-music-playlists.patch
         ./packages/jellycon-play-all.patch
+        ./packages/jellycon-next-up.patch
       ];
     }))
     inputstream-adaptive
