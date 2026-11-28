@@ -160,6 +160,63 @@ class Board(xbmcgui.WindowDialog):
             self.step(-1)
 
 
+ACTION_SELECT = 7
+MONTH_BACK, MONTH_AHEAD = 2, 6   # must match couchboard feed.py
+
+
+class Calendar(Board):
+    """Home menu > Calendar: the Month view, Left/Right page a month, OK = this month,
+    Back closes and puts the TV board back the way it was."""
+
+    def __init__(self):
+        super().__init__()
+        try:
+            self.restore = get_config()["layout"]
+        except Exception:
+            self.restore = None
+        self.offset = 0
+        self.go(0)
+
+    def go(self, offset):
+        offset = max(-MONTH_BACK, min(MONTH_AHEAD, offset))
+        before = rendered_now()
+        try:
+            post_json("/select", {"layout": "month", "month_offset": offset})
+        except Exception as e:
+            xbmc.log(f"couchboard: calendar page failed: {e!r}", xbmc.LOGWARNING)
+            return
+        self.offset = offset
+        if offset in (-MONTH_BACK, MONTH_AHEAD):
+            self.label.setLabel("That's as far as it goes")
+            self.label_until = time.time() + 3
+        for _ in range(24):   # the service re-renders on /select; show it as soon as it lands
+            xbmc.sleep(250)
+            if rendered_now() > before:
+                break
+        self.refresh()
+
+    def onAction(self, action):
+        a = action.getId()
+        if a in CLOSE_ACTIONS:
+            self.closed = True
+            self.close()
+        elif a in (ACTION_RIGHT, ACTION_DOWN):
+            self.go(self.offset + 1)
+        elif a in (ACTION_LEFT, ACTION_UP):
+            self.go(self.offset - 1)
+        elif a == ACTION_SELECT:
+            self.go(0)
+
+    def put_back(self):
+        body = {"month_offset": 0}
+        if self.restore:
+            body["layout"] = self.restore
+        try:
+            post_json("/select", body)
+        except Exception as e:
+            xbmc.log(f"couchboard: calendar restore failed: {e!r}", xbmc.LOGWARNING)
+
+
 def rendered_now():
     try:
         with urllib.request.urlopen(URL, timeout=5) as r:
@@ -168,15 +225,17 @@ def rendered_now():
         return 0.0
 
 
-def board_main():
-    """Back on Home: go to what's playing, as before, otherwise open the board."""
-    if xbmc.Player().isPlaying():
+def board_main(calendar=False):
+    """Back on Home: go to what's playing, as before, otherwise open the board.
+    calendar=True (Home menu > Calendar): open the pageable Month view instead."""
+    if xbmc.Player().isPlaying() and not calendar:
         xbmc.executebuiltin("Action(FullScreen)")
         return
     os.makedirs(CACHE, exist_ok=True)
     monitor = xbmc.Monitor()
     xbmc.executebuiltin("InhibitScreensaver(true)")
-    win = Board()
+    was_playing = xbmc.Player().isPlaying()   # Calendar can open over a paused show
+    win = Calendar() if calendar else Board()
     try:
         win.refresh()
         win.show()
@@ -187,10 +246,12 @@ def board_main():
             if time.time() % 60 >= 3 and int(time.time() // 60) != minute:
                 minute = int(time.time() // 60)
                 win.refresh()
-            if xbmc.Player().isPlaying():   # something started (doorbell aside): get out of the way
+            if xbmc.Player().isPlaying() and not was_playing:   # something started (doorbell aside): get out of the way
                 break
     finally:
         win.close()
+        if calendar:
+            win.put_back()
         del win
         xbmc.executebuiltin("InhibitScreensaver(false)")
 
@@ -236,7 +297,9 @@ def main():
 
 
 if __name__ == "__main__":
-    if "board" in sys.argv[1:]:
+    if "calendar" in sys.argv[1:]:
+        board_main(calendar=True)
+    elif "board" in sys.argv[1:]:
         board_main()
     else:
         main()
